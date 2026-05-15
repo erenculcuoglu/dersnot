@@ -1,0 +1,103 @@
+/* ============================================================
+   DersNot — Modern UI Stilleri
+   Tailwind CSS'in kapsamadığı özel detaylar ve animasyonlar.
+   ============================================================ */
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { 
+    width: 4px; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-track { 
+    background: transparent; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb { 
+    background: #374151; 
+    border-radius: 10px; 
+}
+
+/* Rank Badges - İlk 3 öğrenci için özel rozetler */
+.rank-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+}
+
+.rank-1 { 
+    background: linear-gradient(135deg, #fbbf24, #d97706); 
+    box-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.4); 
+}
+
+.rank-2 { 
+    background: linear-gradient(135deg, #94a3b8, #475569); 
+}
+
+.rank-3 { 
+    background: linear-gradient(135deg, #b45309, #78350f); 
+}
+
+/* Tablo Satırı Hover Animasyonu */
+#student-list tr { 
+    transition: all 0.2s ease; 
+}
+
+#student-list tr:hover { 
+    background: rgba(255, 255, 255, 0.02); 
+}
+
+/* Toast Bildirim Animasyonu */
+#toast {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#toast.show { 
+    transform: translateY(0); 
+    opacity: 1; 
+    pointer-events: auto;
+}
+
+/* Aktif Ders Butonu Stili */
+.course-btn.active {
+    background-color: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: #818cf8; /* brand-400 */
+}
+
+.course-btn.active .dot { 
+    background-color: #6366f1; /* brand-500 */
+}
+
+/* Harf Notu Renkleri */
+.grade-excellent { color: #34d399; } /* AA, BA */
+.grade-good { color: #fbbf24; }      /* BB, CB */
+.grade-average { color: #f97316; }   /* CC, DC */
+.grade-fail { color: #f87171; }      /* DD, FF */
+
+/* Buton Basma Efekti */
+button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+/* Sayfa Geçiş Animasyonu */
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Tablo Ayarı */
+@media (max-width: 640px) {
+    #student-list td {
+        white-space: nowrap;
+    }
+}

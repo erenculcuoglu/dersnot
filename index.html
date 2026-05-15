@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OkulNot — Sınıf ve Not Çizelgesi</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="xlsx.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: { brand: { 500: '#6366f1', 600: '#4f46e5' } }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen antialiased">
+
+  <div id="app-screen" class="min-h-screen flex flex-col">
+    <header class="sticky top-0 z-40 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/60">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-600/30">
+            <i data-lucide="layout-grid" class="w-4 h-4 text-white"></i>
+          </div>
+          <span class="font-bold text-white text-lg tracking-tight">OkulNot</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex flex-col lg:flex-row gap-6">
+        
+        <!-- Sol Panel: Sınıf Listesi -->
+        <aside class="lg:w-64 flex-shrink-0">
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 sticky top-24">
+            <h2 class="font-semibold text-white flex items-center gap-2 text-sm mb-4">
+              <i data-lucide="users" class="w-4 h-4 text-brand-500"></i> Sınıflarım
+            </h2>
+            <form id="add-class-form" class="flex gap-2 mb-4">
+              <input id="class-name-input" type="text" placeholder="Sınıf adı (9-A)..." class="flex-1 bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-3 py-2 outline-none" />
+              <button type="submit" class="bg-brand-600 hover:bg-brand-700 p-2 rounded-lg transition"><i data-lucide="plus" class="w-4 h-4 text-white"></i></button>
+            </form>
+            <nav id="class-list" class="space-y-1 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1"></nav>
+          </div>
+        </aside>
+
+        <!-- Sağ Panel: Sınıf Detayı -->
+        <section class="flex-1 min-w-0">
+          <div id="no-class-selected" class="flex flex-col items-center justify-center h-64 text-center bg-gray-900/30 border-2 border-dashed border-gray-800 rounded-2xl">
+            <i data-lucide="mouse-pointer-click" class="w-8 h-8 text-gray-700 mb-3"></i>
+            <p class="text-gray-500 text-sm">Bir sınıf seçerek not çizelgesini oluşturun.</p>
+          </div>
+
+          <div id="class-content" class="hidden space-y-6">
+            <!-- Üst Bar -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h2 id="selected-class-title" class="text-xl font-bold text-white"></h2>
+                        <p class="text-gray-500 text-xs mt-1">Sınıfın derslerini ve öğrencilerini yönetin.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-export" class="flex items-center gap-2 text-xs font-medium text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 px-4 py-2 rounded-lg transition">
+                            <i data-lucide="file-down" class="w-4 h-4"></i> Excel Çıktısı
+                        </button>
+                        <button id="btn-delete-class" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ders Tanımlama -->
+                <div class="bg-gray-950/50 rounded-xl p-4 border border-gray-800">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sınıfın Dersleri</h3>
+                    <div id="subject-tags" class="flex flex-wrap gap-2 mb-3"></div>
+                    <form id="add-subject-form" class="flex gap-2 max-w-sm">
+                        <input id="subject-name-input" type="text" placeholder="Ders ekle (Matematik...)" class="flex-1 bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-3 py-2 outline-none" />
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs transition">Ekle</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Öğrenci Ekleme -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+              <form id="add-student-form" class="flex flex-col sm:flex-row gap-3">
+                <input id="student-name" type="text" placeholder="Öğrenci Ad Soyad" required class="flex-1 bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-4 py-2.5 outline-none" />
+                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition">Öğrenciyi Kaydet</button>
+              </form>
+            </div>
+
+            <!-- Not Çizelgesi -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead id="table-head" class="bg-gray-950/50 text-gray-500 text-[11px] uppercase tracking-wider"></thead>
+                        <tbody id="student-list" class="divide-y divide-gray-800/50"></tbody>
+                    </table>
+                </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Özel Modal (Silme Onayı) -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-sm">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+      <h3 id="confirm-title" class="text-lg font-bold text-white text-center mb-2">Emin misiniz?</h3>
+      <p id="confirm-msg" class="text-gray-400 text-sm text-center mb-6"></p>
+      <div class="flex gap-3">
+        <button id="confirm-cancel" class="flex-1 bg-gray-800 text-gray-300 py-2.5 rounded-lg text-sm">İptal</button>
+        <button id="confirm-ok" class="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-lg text-sm">Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
