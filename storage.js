@@ -91,6 +91,18 @@ const Storage = {
         }
     },
 
+    updateStudentName(classId, studentId, newName) {
+        const d = this.getData();
+        const c = d.classes.find(x => x.id === classId);
+        if (c) {
+            const s = c.students.find(x => x.id === studentId);
+            if (s) {
+                s.name = newName;
+                this.saveData(d);
+            }
+        }
+    },
+
     updateGrade(classId, studentId, subject, grade) {
         const d = this.getData();
         const c = d.classes.find(x => x.id === classId);

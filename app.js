@@ -208,8 +208,11 @@ const App = {
                 <td class="px-5 py-4 font-medium text-gray-200">${s.name}</td>
                 ${gradesHtml}
                 <td class="px-5 py-4 text-center font-bold text-brand-400 bg-brand-500/5">${rowTotal.toFixed(2)}</td>
-                <td class="px-5 py-4 text-right">
-                    <button onclick="App.deleteStudent('${s.id}')" class="text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1">
+                <td class="px-5 py-4 text-right whitespace-nowrap">
+                    <button onclick="App.editStudentName('${s.id}')" title="İsmi Düzenle" class="text-gray-600 hover:text-emerald-500 transition-all p-1">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="App.deleteStudent('${s.id}')" title="Öğrenciyi Sil" class="text-gray-600 hover:text-red-500 transition-all p-1 ml-1">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </td>
@@ -251,6 +254,18 @@ const App = {
             window.Storage.deleteStudent(this.activeClassId, sid);
             this.renderClassDetail();
         });
+    },
+
+    editStudentName(sid) {
+        const c = window.Storage.getData().classes.find(x => x.id === this.activeClassId);
+        if (!c) return;
+        const s = c.students.find(x => x.id === sid);
+        if (!s) return;
+        const newName = prompt('Öğrencinin yeni adını girin:', s.name);
+        if (newName && newName.trim() && newName.trim() !== s.name) {
+            window.Storage.updateStudentName(this.activeClassId, sid, newName.trim());
+            this.renderClassDetail();
+        }
     },
 
     async exportExcel() {
