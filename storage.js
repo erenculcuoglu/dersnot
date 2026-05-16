@@ -21,6 +21,28 @@ const Storage = {
         return newClass;
     },
 
+    duplicateClass(classId, newName) {
+        const d = this.getData();
+        const c = d.classes.find(x => x.id === classId);
+        if (c) {
+            // Derin kopya (deep copy) alıyoruz ve yeni ID'ler atıyoruz
+            const newClass = {
+                id: this.generateId('c'),
+                name: newName,
+                subjects: [...c.subjects],
+                students: c.students.map(s => ({
+                    id: this.generateId('s'),
+                    name: s.name,
+                    grades: { ...s.grades }
+                }))
+            };
+            d.classes.push(newClass);
+            this.saveData(d);
+            return newClass;
+        }
+        return null;
+    },
+
     addSubject(classId, name) {
         const d = this.getData();
         const c = d.classes.find(x => x.id === classId);

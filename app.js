@@ -70,6 +70,19 @@ const App = {
 
         document.getElementById('btn-export').addEventListener('click', () => this.exportExcel());
         
+        document.getElementById('btn-copy-class').addEventListener('click', () => {
+            const c = window.Storage.getData().classes.find(x => x.id === this.activeClassId);
+            if (!c) return;
+            const newName = prompt('Yeni sınıfın adını girin:', c.name + ' (Kopya)');
+            if (newName && newName.trim()) {
+                const newClass = window.Storage.duplicateClass(this.activeClassId, newName.trim());
+                if (newClass) {
+                    this.renderClassList();
+                    this.selectClass(newClass.id);
+                }
+            }
+        });
+
         this.confirmCancelBtn.addEventListener('click', () => this.closeConfirm());
         this.confirmOkBtn.addEventListener('click', () => {
             if (this.confirmCallback) this.confirmCallback();
