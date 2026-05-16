@@ -70,6 +70,17 @@ const App = {
 
         document.getElementById('btn-export').addEventListener('click', () => this.exportExcel());
         
+        document.getElementById('btn-edit-class').addEventListener('click', () => {
+            const c = window.Storage.getData().classes.find(x => x.id === this.activeClassId);
+            if (!c) return;
+            const newName = prompt('Sınıfın yeni adını girin:', c.name);
+            if (newName && newName.trim() && newName.trim() !== c.name) {
+                window.Storage.updateClassName(this.activeClassId, newName.trim());
+                this.renderClassList();
+                this.renderClassDetail();
+            }
+        });
+
         document.getElementById('btn-copy-class').addEventListener('click', () => {
             const c = window.Storage.getData().classes.find(x => x.id === this.activeClassId);
             if (!c) return;

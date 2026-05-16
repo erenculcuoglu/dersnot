@@ -21,6 +21,17 @@ const Storage = {
         return newClass;
     },
 
+    updateClassName(classId, newName) {
+        const d = this.getData();
+        const c = d.classes.find(x => x.id === classId);
+        if (c) {
+            c.name = newName;
+            this.saveData(d);
+            return c;
+        }
+        return null;
+    },
+
     duplicateClass(classId, newName) {
         const d = this.getData();
         const c = d.classes.find(x => x.id === classId);
