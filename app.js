@@ -147,40 +147,32 @@ const App = {
             this.subjectTags.appendChild(tag);
         });
 
-        const sortedStudents = [...c.students].sort((a, b) => {
-            let valA, valB;
-            if (this.sortField === 'name') {
-                valA = a.name.toLocaleLowerCase('tr');
-                valB = b.name.toLocaleLowerCase('tr');
-            } else if (this.sortField === 'total') {
-                valA = Object.values(a.grades).reduce((acc, curr) => acc + curr, 0);
-                valB = Object.values(b.grades).reduce((acc, curr) => acc + curr, 0);
-            } else {
-                valA = a.grades[this.sortField] || 0;
-                valB = b.grades[this.sortField] || 0;
-            }
-            if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1;
-            if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1;
-            return 0;
+        const sortedStudents = [...c.students].map(s => {
+            return { ...s, lgsScore: this.calculateLGS(s.grades) };
+        }).sort((a, b) => {
+            return b.lgsScore - a.lgsScore; // En yüksekten en düşüğe LGS Puanına göre sırala
         });
 
         let headHtml = `
             <tr>
                 <th class="px-5 py-4 w-12 text-center">#</th>
-                <th class="px-5 py-4 cursor-pointer hover:text-brand-400 transition select-none" onclick="App.setSort('name')">
-                    Öğrenci Ad Soyad ${this.getSortIcon('name')}
+                <th class="px-5 py-4 text-left">
+                    Öğrenci Ad Soyad
                 </th>`;
         
         c.subjects.forEach(sub => {
             headHtml += `
-                <th class="px-5 py-4 text-center w-28 cursor-pointer hover:text-brand-400 transition select-none" onclick="App.setSort('${sub}')">
-                    ${sub} ${this.getSortIcon(sub)}
+                <th class="px-5 py-4 text-center w-28">
+                    ${sub}
                 </th>`;
         });
 
         headHtml += `
-            <th class="px-5 py-4 text-center w-28 bg-brand-500/10 text-brand-400 font-bold cursor-pointer hover:bg-brand-500/20 transition select-none" onclick="App.setSort('total')">
-                TOPLAM ${this.getSortIcon('total')}
+            <th class="px-5 py-4 text-center w-28 bg-gray-800/50 text-gray-400 font-bold">
+                TOPLAM NET
+            </th>
+            <th class="px-5 py-4 text-center w-28 bg-brand-500/10 text-brand-400 font-bold">
+                LGS PUANI
             </th>
             <th class="w-12"></th>
         </tr>`;
@@ -195,19 +187,25 @@ const App = {
             let gradesHtml = '';
             c.subjects.forEach(sub => {
                 const g = s.grades[sub] || 0;
-                rowTotal += g;
+                rowTotal += Number(g);
                 gradesHtml += `
                     <td class="px-5 py-4 text-center">
-                        <input type="number" value="${g}" onchange="App.updateGrade('${s.id}', '${sub}', this.value)" 
+                        <input type="number" step="0.01" value="${g}" onchange="App.updateGrade('${s.id}', '${sub}', this.value)" 
                         class="w-16 bg-gray-800/50 border border-gray-700/50 focus:border-brand-500 rounded-lg text-center text-xs py-2 outline-none transition" />
                     </td>`;
             });
             
+            let rankHtml = `<td class="px-5 py-4 text-gray-600 font-mono text-[10px] text-center">${i + 1}</td>`;
+            if (i === 0) rankHtml = `<td class="px-5 py-4 text-center"><div class="w-6 h-6 mx-auto bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-full flex items-center justify-center text-xs font-bold shadow-[0_0_10px_rgba(234,179,8,0.3)]">1</div></td>`;
+            else if (i === 1) rankHtml = `<td class="px-5 py-4 text-center"><div class="w-6 h-6 mx-auto bg-gray-300/20 text-gray-300 border border-gray-300/50 rounded-full flex items-center justify-center text-xs font-bold shadow-[0_0_10px_rgba(209,213,219,0.3)]">2</div></td>`;
+            else if (i === 2) rankHtml = `<td class="px-5 py-4 text-center"><div class="w-6 h-6 mx-auto bg-orange-700/20 text-orange-500 border border-orange-700/50 rounded-full flex items-center justify-center text-xs font-bold shadow-[0_0_10px_rgba(194,65,12,0.3)]">3</div></td>`;
+
             row.innerHTML = `
-                <td class="px-5 py-4 text-gray-600 font-mono text-[10px] text-center">${i + 1}</td>
+                ${rankHtml}
                 <td class="px-5 py-4 font-medium text-gray-200">${s.name}</td>
                 ${gradesHtml}
-                <td class="px-5 py-4 text-center font-bold text-brand-400 bg-brand-500/5">${rowTotal.toFixed(2)}</td>
+                <td class="px-5 py-4 text-center font-bold text-gray-400 bg-gray-800/30">${rowTotal.toFixed(2)}</td>
+                <td class="px-5 py-4 text-center font-bold text-brand-400 bg-brand-500/10">${s.lgsScore.toFixed(2)}</td>
                 <td class="px-5 py-4 text-right whitespace-nowrap">
                     <button onclick="App.editStudentName('${s.id}')" title="İsmi Düzenle" class="text-gray-600 hover:text-emerald-500 transition-all p-1">
                         <i data-lucide="edit-2" class="w-4 h-4"></i>
@@ -220,6 +218,26 @@ const App = {
             this.studentList.appendChild(row);
         });
         lucide.createIcons();
+    },
+
+    calculateLGS(grades) {
+        const baseScore = 194.76;
+        let totalScore = baseScore;
+        
+        const mainKatsayi = 3.85;
+        const sideKatsayi = 1.28;
+
+        Object.keys(grades).forEach(sub => {
+            const net = parseFloat(grades[sub]) || 0;
+            const sLower = sub.toLocaleLowerCase('tr');
+            if (sLower.includes('türkçe') || sLower.includes('matematik') || sLower.includes('fen')) {
+                totalScore += net * mainKatsayi;
+            } else if (sLower.includes('inkılap') || sLower.includes('din') || sLower.includes('yabancı') || sLower.includes('ingilizce')) {
+                totalScore += net * sideKatsayi;
+            }
+        });
+
+        return Math.min(totalScore, 500);
     },
 
     setSort(field) {
@@ -276,14 +294,19 @@ const App = {
                 return;
             }
 
-            const data = c.students.map((s, i) => {
+            const sortedStudentsForExport = [...c.students].map(s => {
+                return { ...s, lgsScore: this.calculateLGS(s.grades) };
+            }).sort((a, b) => b.lgsScore - a.lgsScore);
+
+            const data = sortedStudentsForExport.map((s, i) => {
                 const row = { '#': i + 1, 'Öğrenci Ad Soyad': s.name };
                 let total = 0;
                 c.subjects.forEach(sub => {
                     row[sub] = s.grades[sub] || 0;
-                    total += row[sub];
+                    total += Number(row[sub]);
                 });
-                row['TOPLAM'] = total;
+                row['TOPLAM NET'] = total;
+                row['LGS PUANI'] = Number(s.lgsScore.toFixed(2));
                 return row;
             });
 
